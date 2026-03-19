@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sinch-messaging-sdk"
+version = "0.1.0"
+description = "Developer-friendly Python SDK for the Sinch Messaging API"
+readme = "README.md"
+requires-python = ">=3.10"
+
+authors = [
+    { name = "Federico Damián" }
+]
+
+dependencies = [
+    "httpx>=0.25.0",
+]
+
+keywords = ["sdk", "sinch", "messaging", "api", "python"]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Typing :: Typed",
+    "Intended Audience :: Developers",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+]
+
+[project.urls]
+Homepage = "https://github.com/fededames/sinch-messaging-sdk"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

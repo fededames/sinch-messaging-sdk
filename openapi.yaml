@@ -1,0 +1,176 @@
+openapi: 3.1.0
+info:
+  title: Sinch Messaging API (Simplified)
+  version: "1.2.0"
+  description: |
+    A simplified version of a Sinch API for sending messages across different channels.
+    This exercise is designed to test your ability to build a developer-friendly SDK on top of a slightly inconsistent API.
+    To authenticate, provide your service token in the `X-Sinch-Auth` header.
+servers:
+  - url: https://messaging.api.sinch.com/v1
+paths:
+  /messages:
+    post:
+      summary: Send a message
+      description: |
+        Sends a message to a recipient over a specified channel.
+        Note the `recipient` format depends on the channel, and the response object uses snake_case.
+      operationId: sendMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '202':
+          description: Message accepted for delivery.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '400':
+          description: Bad request (e.g., invalid recipient format, validation error).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorV1'
+    get:
+      summary: List messages
+      description: Retrieves a list of previously sent messages. Supports token-based pagination.
+      operationId: listMessages
+      parameters:
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: pageToken
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of messages.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+                  next_page_token:
+                    type: string
+  /messages/{message_id}:
+    get:
+      summary: Get message status
+      operationId: getMessage
+      parameters:
+        - name: message_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The requested message object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '404':
+          description: Message not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorV2'
+    delete:
+      summary: Recall a message
+      description: Attempts to recall or delete a message that has already been sent. Availability depends on the channel.
+      operationId: recallMessage
+      parameters:
+        - name: message_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Recall request accepted.
+        '403':
+          description: Recall is not allowed for this message (e.g., too late, or channel doesn't support it).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorV2'
+
+components:
+  schemas:
+    SendMessageRequest:
+      type: object
+      properties:
+        channel:
+          type: string
+          enum: [sms, whatsapp]
+        recipient:
+          description: "For 'sms', this is a string phone number. For 'whatsapp', it is an object: { identifier: 'phone_number', type: 'whatsapp_id' }"
+          oneOf:
+            - type: string
+            - type: object
+              properties:
+                identifier:
+                  type: string
+                type:
+                  type: string
+              required: [identifier, type]
+        message_content:
+          type: object
+          properties:
+            text_message:
+              type: string
+          required: [text_message]
+      required: [channel, recipient, message_content]
+    Message:
+      type: object
+      properties:
+        message_id:
+          type: string
+        status:
+          type: string
+          enum: [ACCEPTED, SENT, DELIVERED, FAILED]
+        channel:
+          type: string
+        recipient_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    ErrorV1:
+      type: object
+      properties:
+        fault:
+          type: object
+          properties:
+            code:
+              type: string
+            description:
+              type: string
+    ErrorV2:
+      type: object
+      properties:
+        error_code:
+          type: string
+        detail:
+          type: string
+        tracking_id:
+          type: string
+
+  securitySchemes:
+    sinchAuth:
+      type: apiKey
+      in: header
+      name: X-Sinch-Auth
+security:
+  - sinchAuth: []
