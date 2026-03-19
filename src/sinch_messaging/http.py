@@ -58,6 +58,16 @@ class HttpClient:
     # Internal helpers
     # -------------------------
 
+    def _redact(self, data: dict[str, Any] | None) -> dict[str, Any] | None:
+        if data is None:
+            return None
+
+        redacted = data.copy()
+        for field in self._redact_fields:
+            if field in redacted:
+                redacted[field] = "***"
+        return redacted
+
     def _request(
         self,
         method: str,
@@ -68,11 +78,11 @@ class HttpClient:
         expect_json: bool = True,
     ) -> dict[str, Any]:
         logger.debug(
-            "Request: method=%s path=%s params=%s body_present=%s",
+            "Request: method=%s path=%s params=%s body=%s",
             method,
             path,
             params,
-            json is not None,
+            self._redact(json),
         )
 
         try:
