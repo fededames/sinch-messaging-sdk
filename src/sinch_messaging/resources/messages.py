@@ -59,6 +59,10 @@ class MessagesResource:
             page_token = page.next_page_token
 
     def recall(self, message_id: str) -> None:
+        """Request recall of a previously sent message.
+
+        Returns nothing. If the API rejects the request, an exception is raised.
+        """
         self._http.delete(f"/messages/{message_id}")
 
     def _normalize_channel(self, channel: str | Channel) -> Channel:
